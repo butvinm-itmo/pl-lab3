@@ -1,12 +1,22 @@
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef struct {
+    uint8_t r, g, b;
+} pixel;
+
+typedef struct {
+    uint32_t width, height;
+    pixel* pixels;
+} image;
+
 typedef struct __attribute__((packed)) {
     /* The header field used to identify the BMP and DIB file. Set to 0x42 0x4D
      * in hexadecimal, same as BM in ASCII. */
-    char bfType[2];
+    uint16_t bfType;
     /* The size of the BMP file in bytes. */
     uint32_t bfileSize;
     /* Reserved. */
@@ -37,36 +47,85 @@ typedef struct __attribute__((packed)) {
     uint32_t biClrImportant;
 } bmp_header;
 
-typedef struct {
-    uint8_t r, g, b;
-} pixel;
+/* From BMP specification. */
+#define BMP_FILE_TYPE 0x4D42  // Little-endian 'BM'
+#define BMP_HEADER_SIZE 40
+#define BMP_COMPRESSION_BI_RGB 0
+#define BMP_COLOR_DEPTH (sizeof(pixel) * 8)
 
-typedef struct {
-    uint32_t width, height;
-    pixel* pixels;
-} image;
+typedef enum {
+    /* IMage read properly. */
+    OK = 0,
+    /* Unsupported or broken header. */
+    INVALID_HEADER,
+    /* Not BMP format. */
+    UNSUPPORTED_FORMAT,
+    /* Unsupported compression. */
+    UNSUPPORTED_COMPRESSION,
+    /* Unsupported color depth. */
+    UNSUPPORTED_COLOR_DEPTH,
+    /* Cannot read pixel data. */
+    INVALID_PIXELS,
+    /* Cannot write to image structure. */
+    BAD_IMAGE_PTR,
+} read_result;
 
 uint8_t calc_width_padding(size_t row_size) { return row_size % 4; }
 
-void from_bmp(FILE* in, image* img) {
+read_result validate_signature(bmp_header* header) {
+    if (header->bfType != BMP_FILE_TYPE) {
+        return UNSUPPORTED_FORMAT;
+    }
+    if (header->biSize != BMP_HEADER_SIZE) {
+        return INVALID_HEADER;
+    }
+    if (header->biCompression != BMP_COMPRESSION_BI_RGB) {
+        return UNSUPPORTED_COMPRESSION;
+    }
+    if (header->biBitCount != BMP_COLOR_DEPTH) {
+        return UNSUPPORTED_COLOR_DEPTH;
+    }
+    return OK;
+}
+
+read_result from_bmp(FILE* in, image* img) {
+    if (img == NULL) {
+        return BAD_IMAGE_PTR;
+    }
+
     bmp_header header = {0};
-    fread(&header, sizeof(bmp_header), 1, in);
+    if (fread(&header, sizeof(bmp_header), 1, in) != 1) {
+        return INVALID_HEADER;
+    }
+    read_result signature_result = validate_signature(&header);
+    if (signature_result != OK) {
+        return signature_result;
+    }
+    // Set cursor at pixels array.
+    if (fseek(in, header.bOffBits, SEEK_SET) != 0) {
+        return INVALID_PIXELS;
+    }
 
     const size_t row_size = header.biWidth * sizeof(pixel);
     const uint8_t row_padding = calc_width_padding(row_size);
     pixel* pixels = malloc(row_size * header.biHeight);
 
-    // Set cursor at pixels array.
-    fseek(in, header.bOffBits, SEEK_SET);
+    bool read_fail = false;
     for (uint32_t row = 0; row < header.biHeight; row++) {
-        fread(pixels + row * header.biWidth, row_size, 1, in);
-        fseek(in, row_padding, SEEK_CUR);
+        if (fread(pixels + row * header.biWidth, row_size, 1, in) != 0) {
+            break;
+        }
+        if (fseek(in, row_padding, SEEK_CUR)) {
+            break;
+        }
     }
-
-    if (img != NULL) {
-        *img = (image
-        ){.width = header.biWidth, .height = header.biHeight, .pixels = pixels};
+    if (read_fail) {
+        free(pixels);
+        return INVALID_PIXELS;
     }
+    *img = (image
+    ){.width = header.biWidth, .height = header.biHeight, .pixels = pixels};
+    return OK;
 }
 
 int main(int argc, char** argv) {
@@ -83,7 +142,8 @@ int main(int argc, char** argv) {
 
     image img = {0};
     FILE* in = fopen(argv[1], "r");
-    from_bmp(in, &img);
+    read_result result = from_bmp(in, &img);
+    printf("%d\n", result);
     fclose(in);
     printf("width: %" PRId32 " height: %" PRId32 "\n", img.width, img.height);
     return 0;
