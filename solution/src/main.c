@@ -46,32 +46,26 @@ typedef struct {
     pixel* pixels;
 } image;
 
-uint32_t get_pixels_array_size(
-    uint32_t pixels_width,
-    uint32_t pixels_height,
-    uint32_t pixel_size
-) {
-    const uint32_t bytes_width = pixels_width * pixel_size;
-    return (bytes_width + bytes_width % 4) * pixels_height;
-}
+uint8_t calc_width_padding(size_t row_size) { return row_size % 4; }
 
 void from_bmp(FILE* in, image* img) {
-    bmp_header* header = malloc(sizeof(bmp_header));
-    fread(header, sizeof(bmp_header), 1, in);
+    bmp_header header = {0};
+    fread(&header, sizeof(bmp_header), 1, in);
 
-    // Drop offset bits.
-    fseek(in, header->bOffBits, SEEK_SET);
+    const size_t row_size = header.biWidth * sizeof(pixel);
+    const uint8_t row_padding = calc_width_padding(row_size);
+    pixel* pixels = malloc(row_size * header.biHeight);
 
-    const size_t pixels_array_size =
-        get_pixels_array_size(header->biWidth, header->biHeight, sizeof(pixel));
-    pixel* pixels_array = malloc(pixels_array_size);
-    fread(pixels_array, pixels_array_size, 1, in);
+    // Set cursor at pixels array.
+    fseek(in, header.bOffBits, SEEK_SET);
+    for (uint32_t row = 0; row < header.biHeight; row++) {
+        fread(pixels + row * header.biWidth, row_size, 1, in);
+        fseek(in, row_padding, SEEK_CUR);
+    }
 
     if (img != NULL) {
         *img = (image
-        ){.width = header->biWidth,
-          .height = header->biHeight,
-          .pixels = pixels_array};
+        ){.width = header.biWidth, .height = header.biHeight, .pixels = pixels};
     }
 }
 
