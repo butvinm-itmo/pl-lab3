@@ -11,21 +11,21 @@
 
 typedef enum {
     /* Image read properly. */
-    OK = 0,
+    READ_OK = 0,
     /* Unsupported or broken header. */
-    INVALID_HEADER,
+    READ_INVALID_HEADER,
     /* Not BMP format. */
-    UNSUPPORTED_FORMAT,
+    READ_UNSUPPORTED_FORMAT,
     /* Unsupported compression. */
-    UNSUPPORTED_COMPRESSION,
+    READ_UNSUPPORTED_COMPRESSION,
     /* Unsupported color depth. */
-    UNSUPPORTED_COLOR_DEPTH,
+    READ_UNSUPPORTED_COLOR_DEPTH,
     /* Cannot read pixel data. */
-    INVALID_PIXELS,
+    READ_INVALID_PIXELS,
     /* Cannot write to image structure. */
-    BAD_IMAGE_PTR,
+    READ_BAD_IMAGE_PTR,
     /* Not enough memory for image */
-    CANNOT_ALLOC_MEMORY,
+    READ_CANNOT_ALLOC_MEMORY,
 } read_result;
 
 /* Read BMP image from file. */

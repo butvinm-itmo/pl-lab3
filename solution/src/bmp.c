@@ -60,67 +60,66 @@ bmp_header _HEADER = {0};
 #define COLOR_DEPTH (PIXEL_SIZE * 8) // 24 bits
 #define DPI_72 2835                  // Default image resolution
 
-uint8_t calc_width_padding(size_t row_size) {
+uint8_t calc_row_padding(size_t row_size) {
     return 4 - row_size % 4;
 }
 
 read_result validate_signature(bmp_header *header) {
     if (header->bf.type != BMP_FILE_TYPE) {
-        return UNSUPPORTED_FORMAT;
+        return READ_UNSUPPORTED_FORMAT;
     }
     if (header->bi.header_size != BI_HEADER_SIZE) {
-        return UNSUPPORTED_FORMAT;
+        return READ_UNSUPPORTED_FORMAT;
     }
     if (header->bi.compression != BI_RGB_COMPRESSION) {
-        return UNSUPPORTED_COMPRESSION;
+        return READ_UNSUPPORTED_COMPRESSION;
     }
     if (header->bi.bit_count != COLOR_DEPTH) {
-        return UNSUPPORTED_COLOR_DEPTH;
+        return READ_UNSUPPORTED_COLOR_DEPTH;
     }
-    return OK;
+    return READ_OK;
 }
 
 read_result from_bmp(FILE *in, image *img) {
     if (img == NULL) {
-        return BAD_IMAGE_PTR;
+        return READ_BAD_IMAGE_PTR;
     }
 
-    bmp_header header = {0};
+    bmp_header header;
     if (fread(&header, sizeof(header), 1, in) != 1) {
-        return INVALID_HEADER;
+        return READ_INVALID_HEADER;
     }
 
     read_result signature_result = validate_signature(&header);
-    if (signature_result != OK) {
+    if (signature_result != READ_OK) {
         return signature_result;
     }
 
-    const size_t row_size = header.bi.width * sizeof(pixel);
-    const uint8_t row_padding = calc_width_padding(row_size);
-    pixel *pixels = malloc(row_size * header.bi.height);
-    if (pixels == NULL) {
-        return CANNOT_ALLOC_MEMORY;
+    const uint8_t row_padding = calc_row_padding(header.bi.width * PIXEL_SIZE);
+
+    *img = create_image(header.bi.width, header.bi.height);
+    if (img->pixels == NULL) {
+        return READ_CANNOT_ALLOC_MEMORY;
     }
 
     // Set cursor at pixels array.
     if (fseek(in, header.bf.pixel_array_offset, SEEK_SET) != 0) {
-        goto invalid_pixels;
+        return READ_INVALID_PIXELS;
     }
+    pixel *row_ptr = img->pixels;
     for (uint32_t row = 0; row < header.bi.height; row++) {
-        if (fread(pixels + row * header.bi.width, row_size, 1, in) != 1) {
-            goto invalid_pixels;
+        row_ptr += row * header.bi.width;
+        const size_t pixels_read = fread(
+            row_ptr, PIXEL_SIZE, header.bi.width, in
+        );
+        if (pixels_read != header.bi.width) {
+            return READ_INVALID_PIXELS;
         }
         if (fseek(in, row_padding, SEEK_CUR) != 0) {
-            goto invalid_pixels;
+            return READ_INVALID_PIXELS;
         }
     }
-    *img = (image){
-        .width = header.bi.width, .height = header.bi.height, .pixels = pixels};
-    return OK;
-
-invalid_pixels:
-    free(pixels);
-    return INVALID_PIXELS;
+    return READ_OK;
 }
 
 size_t calc_file_size(uint32_t width, uint32_t height) {
@@ -156,7 +155,7 @@ write_result to_bmp(FILE *out, image *img) {
     }
 
     const size_t row_size = img->width * sizeof(pixel);
-    const uint8_t row_padding = calc_width_padding(row_size);
+    const uint8_t row_padding = calc_row_padding(row_size);
     for (uint32_t row = 0; row < img->height; row++) {
         if (fwrite(img->pixels + row * img->width, row_size, 1, out) != 1) {
             return WRITE_FAILED;
