@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#define pixel_at(img, x, y) ((img).pixels + (x) + (y) * (img).width)
+
 /* Pixel with 1-byte color depth. */
 typedef struct {
     uint8_t r, g, b;
