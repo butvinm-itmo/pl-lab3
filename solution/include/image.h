@@ -6,6 +6,13 @@
 
 #define pixel_at(img, x, y) ((img).pixels + (x) + (y) * (img).width)
 
+#define foreach_pixel(img, expression)                                         \
+    for (uint32_t i = 0; i < (img).width; ++i) {                               \
+        for (uint32_t j = 0; j < (img).height; ++j) {                          \
+            expression;                                                        \
+        }                                                                      \
+    }
+
 /* Pixel with 1-byte color depth. */
 typedef struct {
     uint8_t r, g, b;
