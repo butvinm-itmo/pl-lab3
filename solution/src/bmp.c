@@ -59,6 +59,7 @@ bmp_header _HEADER = {0};
 #define PIXEL_SIZE sizeof(pixel)     // Pixel size in bytes
 #define COLOR_DEPTH (PIXEL_SIZE * 8) // 24 bits
 #define DPI_72 2835                  // Default image resolution
+const char PADDING_BYTE = '\0';
 
 uint8_t calc_row_padding(size_t row_size) {
     return (4 - row_size % 4) % 4;
@@ -95,7 +96,7 @@ read_result from_bmp(FILE *in, image *img) {
         return signature_result;
     }
 
-    const uint8_t row_padding = calc_row_padding(header.bi.width * PIXEL_SIZE);
+    const uint8_t padding = calc_row_padding(header.bi.width * PIXEL_SIZE);
 
     *img = create_image(header.bi.width, header.bi.height);
     if (img->pixels == NULL) {
@@ -108,26 +109,26 @@ read_result from_bmp(FILE *in, image *img) {
     }
     pixel *row_ptr = img->pixels;
     for (uint32_t row = 0; row < header.bi.height; row++) {
-        row_ptr += header.bi.width;
         const size_t pixels_read = fread(
-            row_ptr, PIXEL_SIZE, header.bi.width, in
-        );
+            row_ptr, PIXEL_SIZE, header.bi.width, in);
         if (pixels_read != header.bi.width) {
             return READ_INVALID_PIXELS;
         }
-        if (fseek(in, row_padding, SEEK_CUR) != 0) {
+        if (fseek(in, padding, SEEK_CUR) != 0) {
             return READ_INVALID_PIXELS;
         }
+        row_ptr += header.bi.width;
     }
     return READ_OK;
 }
 
-size_t calc_file_size(uint32_t width, uint32_t height) {
-    return BMP_HEADER_SIZE + width * height * PIXEL_SIZE;
+size_t calc_file_size(uint32_t width, uint32_t height, uint32_t padding) {
+    return BMP_HEADER_SIZE + (width * PIXEL_SIZE + padding) * height;
 }
 
 write_result to_bmp(FILE *out, image *img) {
-    const size_t file_size = calc_file_size(img->width, img->height);
+    const uint8_t padding = calc_row_padding(img->width * PIXEL_SIZE);
+    const size_t file_size = calc_file_size(img->width, img->height, padding);
     bmp_header header = {
         .bf =
             {
@@ -150,19 +151,20 @@ write_result to_bmp(FILE *out, image *img) {
                 .colors_important = BI_ALL_COLORS,
             },
     };
-    if (fwrite(&header, BMP_HEADER_SIZE, 1, out) != 1) {
+    if (fwrite(&header, header.bf.pixel_array_offset, 1, out) != 1) {
         return WRITE_FAILED;
     }
-
-    const size_t row_size = img->width * PIXEL_SIZE;
-    const uint8_t row_padding = calc_row_padding(row_size);
-    for (uint32_t row = 0; row < img->height; row++) {
-        if (fwrite(img->pixels + row * img->width, row_size, 1, out) != 1) {
+    pixel *row_ptr = img->pixels;
+    for (uint32_t row = 0; row < header.bi.height; row++) {
+        const size_t pixels_written = fwrite(
+            row_ptr, PIXEL_SIZE, header.bi.width, out);
+        if (pixels_written != header.bi.width) {
             return WRITE_FAILED;
         }
-        if (fseek(out, row_padding, SEEK_CUR)) {
+        if (fwrite(&PADDING_BYTE, padding, 1, out) != 1) {
             return WRITE_FAILED;
         }
+        row_ptr += header.bi.width;
     }
     return WRITE_OK;
 }
