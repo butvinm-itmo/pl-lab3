@@ -4,4 +4,9 @@ UseTab: Never
 ColumnLimit: 80
 AllowShortFunctionsOnASingleLine: None
 AlignAfterOpenBracket: AlwaysBreak
-PackConstructorInitializers: false
+PenaltyBreakAssignment: 200
+PenaltyBreakBeforeFirstCallParameter: 0
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+BinPackArguments: false
+BinPackParameters: false
