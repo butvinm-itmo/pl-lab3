@@ -61,7 +61,7 @@ bmp_header _HEADER = {0};
 #define DPI_72 2835                  // Default image resolution
 
 uint8_t calc_width_padding(size_t row_size) {
-    return row_size % 4;
+    return 4 - row_size % 4;
 }
 
 read_result validate_signature(bmp_header *header) {
