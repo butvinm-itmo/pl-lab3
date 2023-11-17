@@ -31,4 +31,14 @@ typedef enum {
 /* Read BMP image from file. */
 read_result from_bmp(FILE *in, image *img);
 
+typedef enum class {
+    /* Image read properly. */
+    WRITE_OK = 0,
+    /* Writing tio file failed. */
+    WRITE_FAILED,
+} write_result;
+
+/* Write image to file in BMP format. */
+write_result to_bmp(FILE *out, image *img);
+
 #endif /* BMP_H */

@@ -127,7 +127,7 @@ size_t calc_file_size(uint32_t width, uint32_t height) {
     return BMP_HEADER_SIZE + width * height * PIXEL_SIZE;
 }
 
-void to_bmp(FILE *out, image *img) {
+write_result to_bmp(FILE *out, image *img) {
     const size_t file_size = calc_file_size(img->width, img->height);
     bmp_header header = {
         .bf =
@@ -151,14 +151,19 @@ void to_bmp(FILE *out, image *img) {
                 .colors_important = BI_ALL_COLORS,
             },
     };
-    fwrite(&header, BMP_HEADER_SIZE, 1, out);
-    printf("%lo ", ftell(out));
+    if (fwrite(&header, BMP_HEADER_SIZE, 1, out) != 1) {
+        return WRITE_FAILED;
+    }
 
     const size_t row_size = img->width * sizeof(pixel);
     const uint8_t row_padding = calc_width_padding(row_size);
     for (uint32_t row = 0; row < img->height; row++) {
-        printf("%lo ", ftell(out));
-        fwrite(img->pixels + row * img->width, row_size, 1, out);
-        fseek(out, row_padding, SEEK_CUR);
+        if (fwrite(img->pixels + row * img->width, row_size, 1, out) != 1) {
+            return WRITE_FAILED;
+        }
+        if (fseek(out, row_padding, SEEK_CUR)) {
+            return WRITE_FAILED;
+        }
     }
+    return WRITE_OK;
 }
