@@ -75,37 +75,33 @@ read_result from_bmp(FILE *in, image *img) {
     if (fread(&header, sizeof(bmp_header), 1, in) != 1) {
         return INVALID_HEADER;
     }
+
     read_result signature_result = validate_signature(&header);
     if (signature_result != OK) {
         return signature_result;
     }
 
-    // Set cursor at pixels array.
-    if (fseek(in, header.bOffBits, SEEK_SET) != 0) {
-        return INVALID_PIXELS;
-    }
     const size_t row_size = header.biWidth * sizeof(pixel);
     const uint8_t row_padding = calc_width_padding(row_size);
     pixel *pixels = malloc(row_size * header.biHeight);
 
-    bool read_fail = false;
+    // Set cursor at pixels array.
+    if (fseek(in, header.bOffBits, SEEK_SET) != 0) {
+        goto invalid_pixels;
+    }
     for (uint32_t row = 0; row < header.biHeight; row++) {
-        if (fread(pixels + row * header.biWidth, row_size, 1, in) != 0) {
-            break;
+        if (fread(pixels + row * header.biWidth, row_size, 1, in) != 1) {
+            goto invalid_pixels;
         }
-        if (fseek(in, row_padding, SEEK_CUR)) {
-            break;
+        if (fseek(in, row_padding, SEEK_CUR) != 0) {
+            goto invalid_pixels;
         }
     }
-    if (read_fail) {
-        free(pixels);
-        return INVALID_PIXELS;
-    }
-
     *img = (image){
-        .width = header.biWidth,
-        .height = header.biHeight,
-        .pixels = pixels
-    };
+        .width = header.biWidth, .height = header.biHeight, .pixels = pixels};
     return OK;
+
+invalid_pixels:
+    free(pixels);
+    return INVALID_PIXELS;
 }
