@@ -24,6 +24,8 @@ typedef enum {
     INVALID_PIXELS,
     /* Cannot write to image structure. */
     BAD_IMAGE_PTR,
+    /* Not enough memory for image */
+    CANNOT_ALLOC_MEMORY,
 } read_result;
 
 /* Read BMP image from file. */

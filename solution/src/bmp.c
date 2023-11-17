@@ -84,6 +84,9 @@ read_result from_bmp(FILE *in, image *img) {
     const size_t row_size = header.biWidth * sizeof(pixel);
     const uint8_t row_padding = calc_width_padding(row_size);
     pixel *pixels = malloc(row_size * header.biHeight);
+    if (pixels == NULL) {
+        return CANNOT_ALLOC_MEMORY;
+    }
 
     // Set cursor at pixels array.
     if (fseek(in, header.bOffBits, SEEK_SET) != 0) {
