@@ -48,11 +48,17 @@ typedef struct __attribute__((packed)) {
 
 /* From BMP specification. */
 bmp_header _HEADER = {0};
-#define BMP_FILE_TYPE 0x4D42 // Little-endian 'BM'
-#define BMP_HEADER_SIZE sizeof(_HEADER) // size of full header
+#define BMP_FILE_TYPE 0x4D42              // Little-endian 'BM'
+#define BMP_RESERVED 0                    // Always 0
+#define BMP_HEADER_SIZE sizeof(_HEADER)   // size of full header
 #define BI_HEADER_SIZE sizeof(_HEADER.bi) // 40 bytes
-#define BI_NO_COMPRESSION 0
-#define COLOR_DEPTH (sizeof(pixel) * 8) // 24 bits
+#define BI_RGB_COMPRESSION 0              // We support only uncompressed files
+#define BI_PLANES 1                       // Always 1
+#define BI_ALL_COLORS 0                   // Enable full color palette
+#define BI_DUMMY_SIZE 0              // Image size for not-compressed images
+#define PIXEL_SIZE sizeof(pixel)     // Pixel size in bytes
+#define COLOR_DEPTH (PIXEL_SIZE * 8) // 24 bits
+#define DPI_72 2835                  // Default image resolution
 
 uint8_t calc_width_padding(size_t row_size) {
     return row_size % 4;
@@ -65,7 +71,7 @@ read_result validate_signature(bmp_header *header) {
     if (header->bi.header_size != BI_HEADER_SIZE) {
         return UNSUPPORTED_FORMAT;
     }
-    if (header->bi.compression != BI_NO_COMPRESSION) {
+    if (header->bi.compression != BI_RGB_COMPRESSION) {
         return UNSUPPORTED_COMPRESSION;
     }
     if (header->bi.bit_count != COLOR_DEPTH) {
@@ -115,4 +121,44 @@ read_result from_bmp(FILE *in, image *img) {
 invalid_pixels:
     free(pixels);
     return INVALID_PIXELS;
+}
+
+size_t calc_file_size(uint32_t width, uint32_t height) {
+    return BMP_HEADER_SIZE + width * height * PIXEL_SIZE;
+}
+
+void to_bmp(FILE *out, image *img) {
+    const size_t file_size = calc_file_size(img->width, img->height);
+    bmp_header header = {
+        .bf =
+            {
+                .type = BMP_FILE_TYPE,
+                .file_size = file_size,
+                .reserved = BMP_RESERVED,
+                .pixel_array_offset = BMP_HEADER_SIZE,
+            },
+        .bi =
+            {
+                .header_size = BI_HEADER_SIZE,
+                .width = img->width,
+                .height = img->height,
+                .planes = BI_PLANES,
+                .bit_count = COLOR_DEPTH,
+                .image_size = BI_DUMMY_SIZE,
+                .x_pix_per_meter = DPI_72,
+                .y_pix_per_meter = DPI_72,
+                .colors_used = BI_ALL_COLORS,
+                .colors_important = BI_ALL_COLORS,
+            },
+    };
+    fwrite(&header, BMP_HEADER_SIZE, 1, out);
+    printf("%lo ", ftell(out));
+
+    const size_t row_size = img->width * sizeof(pixel);
+    const uint8_t row_padding = calc_width_padding(row_size);
+    for (uint32_t row = 0; row < img->height; row++) {
+        printf("%lo ", ftell(out));
+        fwrite(img->pixels + row * img->width, row_size, 1, out);
+        fseek(out, row_padding, SEEK_CUR);
+    }
 }
