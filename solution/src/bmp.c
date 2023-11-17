@@ -61,7 +61,7 @@ bmp_header _HEADER = {0};
 #define DPI_72 2835                  // Default image resolution
 
 uint8_t calc_row_padding(size_t row_size) {
-    return 4 - row_size % 4;
+    return (4 - row_size % 4) % 4;
 }
 
 read_result validate_signature(bmp_header *header) {
@@ -108,7 +108,7 @@ read_result from_bmp(FILE *in, image *img) {
     }
     pixel *row_ptr = img->pixels;
     for (uint32_t row = 0; row < header.bi.height; row++) {
-        row_ptr += row * header.bi.width;
+        row_ptr += header.bi.width;
         const size_t pixels_read = fread(
             row_ptr, PIXEL_SIZE, header.bi.width, in
         );
@@ -154,7 +154,7 @@ write_result to_bmp(FILE *out, image *img) {
         return WRITE_FAILED;
     }
 
-    const size_t row_size = img->width * sizeof(pixel);
+    const size_t row_size = img->width * PIXEL_SIZE;
     const uint8_t row_padding = calc_row_padding(row_size);
     for (uint32_t row = 0; row < img->height; row++) {
         if (fwrite(img->pixels + row * img->width, row_size, 1, out) != 1) {
