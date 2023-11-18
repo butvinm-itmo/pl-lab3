@@ -22,8 +22,6 @@ typedef enum {
     FROM_BMP_UNSUPPORTED_COLOR_DEPTH,
     /* Cannot read pixel data. */
     FROM_BMP_INVALID_PIXELS,
-    /* Cannot write to image structure. */
-    FROM_BMP_BAD_IMAGE_PTR,
     /* Not enough memory for image */
     FROM_BMP_CANNOT_ALLOC_MEMORY,
 } FromBmpStatus;
