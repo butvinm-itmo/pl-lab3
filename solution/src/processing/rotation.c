@@ -8,7 +8,7 @@
 MaybeImpl(RotationAngle);
 
 /* Parse rotation angle from string. */
-MaybeRotationAngle parse_rotation_angle(char *str) {
+MaybeRotationAngle parse_rotation_angle(char const *str) {
     char *endptr;
     errno = 0;
     long parsed_angle = strtol(str, &endptr, 10);
@@ -33,7 +33,7 @@ MaybeRotationAngle parse_rotation_angle(char *str) {
     }
 }
 
-Image _rotate_90(const Image img) {
+Image _rotate_90(Image img) {
     Image new_image = create_image(img.height, img.width);
     // clang-format off
     foreach_pixel(
@@ -44,7 +44,7 @@ Image _rotate_90(const Image img) {
     return new_image;
 }
 
-Image _rotate_180(const Image img) {
+Image _rotate_180(Image img) {
     Image new_image = create_image(img.width, img.height);
     // clang-format off
         foreach_pixel(
@@ -59,7 +59,7 @@ Image _rotate_180(const Image img) {
     return new_image;
 }
 
-Image _rotate_270(const Image img) {
+Image _rotate_270(Image img) {
     Image new_image = create_image(img.height, img.width);
     // clang-format off
     foreach_pixel(
@@ -70,7 +70,7 @@ Image _rotate_270(const Image img) {
     return new_image;
 }
 
-Image rotate_image(const Image img, RotationAngle angle) {
+Image rotate_image(Image img, RotationAngle angle) {
     /* Rotate image data. */
     switch (angle) {
     case ROT_ANGLE_0:

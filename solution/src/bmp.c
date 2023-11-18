@@ -151,7 +151,7 @@ void _build_header(
     };
 }
 
-ToBmpStatus to_bmp(FILE *out, const Image img) {
+ToBmpStatus to_bmp(FILE *out, Image img) {
     const uint8_t padding = _calc_padding(img.width * PIXEL_SIZE);
     const size_t file_size = _calc_file_size(img.width, img.height, padding);
 

@@ -11,7 +11,7 @@ const char *LEVEL_LABELS[] = {
     [LOG_DEBUG] = "DEBUG ",
 };
 
-void flogf(FILE *stream, LogLevel level, const char *message, ...) {
+void flogf(FILE *stream, LogLevel level, char const *message, ...) {
     if (level <= LOG_LEVEL) {
         va_list argptr;
         va_start(argptr, message);

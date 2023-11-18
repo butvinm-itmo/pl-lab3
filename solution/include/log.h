@@ -12,7 +12,7 @@ typedef enum { LOG_ERROR = 0, LOG_INFO, LOG_DEBUG } LogLevel;
 extern LogLevel LOG_LEVEL;
 
 /* General logger. */
-void flogf(FILE *stream, LogLevel level, const char *message, ...);
+void flogf(FILE *stream, LogLevel level, char const *message, ...);
 
 #define INFO(message) flogf(stdout, LOG_INFO, message)
 #define INFOF(message, ...) flogf(stdout, LOG_INFO, message, __VA_ARGS__)

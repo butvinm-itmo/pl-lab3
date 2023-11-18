@@ -39,6 +39,6 @@ typedef enum class {
 } ToBmpStatus;
 
 /* Write image to file in BMP format. */
-ToBmpStatus to_bmp(FILE *out, const Image img);
+ToBmpStatus to_bmp(FILE *out, Image img);
 
 #endif /* BMP_H */

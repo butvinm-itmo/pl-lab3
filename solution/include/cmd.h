@@ -6,8 +6,8 @@
 
 /* Command line args required for program. */
 typedef struct {
-    char *source_image_path;
-    char *output_image_path;
+    char const *source_image_path;
+    char const *output_image_path;
     RotationAngle angle;
 } CmdArgs;
 
@@ -24,6 +24,6 @@ typedef enum {
 Result(ArgsParseResult, CmdArgs, ArgsParseStatus);
 
 /* Parse command line args. */
-ArgsParseResult parse_cmd_args(int argc, char **argv);
+ArgsParseResult parse_cmd_args(int argc, char const **argv);
 
 #endif

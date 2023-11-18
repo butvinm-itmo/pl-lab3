@@ -1,7 +1,7 @@
 #include "cmd.h"
 #include "processing/rotation.h"
 
-ArgsParseResult parse_cmd_args(int argc, char **argv) {
+ArgsParseResult parse_cmd_args(int argc, char const **argv) {
     if (argc < 4) {
         return (ArgsParseResult){CMD_ARGS_NOT_ENOUGH};
     }
