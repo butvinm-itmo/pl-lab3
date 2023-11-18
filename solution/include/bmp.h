@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #include "image.h"
+#include "result.h"
 
 typedef enum {
     /* Image read properly. */
@@ -26,19 +27,21 @@ typedef enum {
     FROM_BMP_BAD_IMAGE_PTR,
     /* Not enough memory for image */
     FROM_BMP_CANNOT_ALLOC_MEMORY,
-} from_bmp_result;
+} from_bmp_status;
+
+RESULT(from_bmp_result, image, from_bmp_status)
 
 /* Read BMP image from file. */
-from_bmp_result from_bmp(FILE *in, image *img);
+from_bmp_result from_bmp(FILE *in);
 
 typedef enum class {
     /* Image read properly. */
     TO_BMP_OK = 0,
     /* Writing tio file failed. */
     TO_BMP_FAILED,
-} to_bmp_result;
+} to_bmp_status;
 
 /* Write image to file in BMP format. */
-to_bmp_result to_bmp(FILE *out, image *img);
+to_bmp_status to_bmp(FILE *out, const image img);
 
 #endif /* BMP_H */

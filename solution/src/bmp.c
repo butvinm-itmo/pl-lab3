@@ -65,7 +65,7 @@ uint8_t calc_row_padding(size_t row_size) {
     return (4 - row_size % 4) % 4;
 }
 
-from_bmp_result validate_signature(bmp_header *header) {
+from_bmp_status validate_signature(bmp_header *header) {
     if (header->bf.type != BMP_FILE_TYPE) {
         return FROM_BMP_UNSUPPORTED_FORMAT;
     }
@@ -81,54 +81,50 @@ from_bmp_result validate_signature(bmp_header *header) {
     return FROM_BMP_OK;
 }
 
-from_bmp_result from_bmp(FILE *in, image *img) {
-    if (img == NULL) {
-        return FROM_BMP_BAD_IMAGE_PTR;
-    }
-
+from_bmp_result from_bmp(FILE *in) {
     bmp_header header;
     if (fread(&header, sizeof(header), 1, in) != 1) {
-        return FROM_BMP_INVALID_HEADER;
+        return (from_bmp_result){FROM_BMP_INVALID_HEADER};
     }
 
-    from_bmp_result signature_result = validate_signature(&header);
-    if (signature_result != FROM_BMP_OK) {
-        return signature_result;
+    from_bmp_status signature_status = validate_signature(&header);
+    if (signature_status != FROM_BMP_OK) {
+        return (from_bmp_result){signature_status};
     }
 
     const uint8_t padding = calc_row_padding(header.bi.width * PIXEL_SIZE);
 
-    *img = create_image(header.bi.width, header.bi.height);
-    if (img->pixels == NULL) {
-        return FROM_BMP_CANNOT_ALLOC_MEMORY;
+    image img = create_image(header.bi.width, header.bi.height);
+    if (img.pixels == NULL) {
+        return (from_bmp_result){FROM_BMP_CANNOT_ALLOC_MEMORY};
     }
 
     // Set cursor at pixels array.
     if (fseek(in, header.bf.pixel_array_offset, SEEK_SET) != 0) {
-        return FROM_BMP_INVALID_PIXELS;
+        return (from_bmp_result){FROM_BMP_INVALID_PIXELS};
     }
-    pixel *row_ptr = img->pixels;
+    pixel *row_ptr = img.pixels;
     for (uint32_t row = 0; row < header.bi.height; row++) {
         const size_t pixels_read = fread(
             row_ptr, PIXEL_SIZE, header.bi.width, in);
         if (pixels_read != header.bi.width) {
-            return FROM_BMP_INVALID_PIXELS;
+            return (from_bmp_result){FROM_BMP_INVALID_PIXELS};
         }
         if (fseek(in, padding, SEEK_CUR) != 0) {
-            return FROM_BMP_INVALID_PIXELS;
+            return (from_bmp_result){FROM_BMP_INVALID_PIXELS};
         }
         row_ptr += header.bi.width;
     }
-    return FROM_BMP_OK;
+    return (from_bmp_result){FROM_BMP_OK, img};
 }
 
 size_t calc_file_size(uint32_t width, uint32_t height, uint32_t padding) {
     return BMP_HEADER_SIZE + (width * PIXEL_SIZE + padding) * height;
 }
 
-to_bmp_result to_bmp(FILE *out, image *img) {
-    const uint8_t padding = calc_row_padding(img->width * PIXEL_SIZE);
-    const size_t file_size = calc_file_size(img->width, img->height, padding);
+to_bmp_status to_bmp(FILE *out, const image img) {
+    const uint8_t padding = calc_row_padding(img.width * PIXEL_SIZE);
+    const size_t file_size = calc_file_size(img.width, img.height, padding);
     bmp_header header = {
         .bf =
             {
@@ -140,8 +136,8 @@ to_bmp_result to_bmp(FILE *out, image *img) {
         .bi =
             {
                 .header_size = BI_HEADER_SIZE,
-                .width = img->width,
-                .height = img->height,
+                .width = img.width,
+                .height = img.height,
                 .planes = BI_PLANES,
                 .bit_count = COLOR_DEPTH,
                 .image_size = BI_DUMMY_SIZE,
@@ -154,7 +150,7 @@ to_bmp_result to_bmp(FILE *out, image *img) {
     if (fwrite(&header, header.bf.pixel_array_offset, 1, out) != 1) {
         return TO_BMP_FAILED;
     }
-    pixel *row_ptr = img->pixels;
+    pixel *row_ptr = img.pixels;
     for (uint32_t row = 0; row < header.bi.height; row++) {
         const size_t pixels_written = fwrite(
             row_ptr, PIXEL_SIZE, header.bi.width, out);
