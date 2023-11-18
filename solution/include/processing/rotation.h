@@ -14,11 +14,11 @@ typedef enum {
     ANGLE_270 = 270,
 } rot_angle;
 
-RESULT(rot_angle, bool)
-static const rot_angle_result rot_angle_err = {.status = false};
+RESULT(angle_parse_result, rot_angle, bool)
+static const angle_parse_result rot_angle_err = {.status = false};
 
 /* Parse rotation angle from string. */
-rot_angle_result parse_rot_angle(char *str);
+angle_parse_result parse_rot_angle(char *str);
 
 /* Rotate image date inplace. */
 image rotate_image(const image img, rot_angle angle);

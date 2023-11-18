@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 /* Parse rotation angle from string. */
-rot_angle_result parse_rot_angle(char *str) {
+angle_parse_result parse_rot_angle(char *str) {
     char *endptr;
     errno = 0;
     long parsed_angle = strtol(str, &endptr, 10);
@@ -18,15 +18,15 @@ rot_angle_result parse_rot_angle(char *str) {
     switch (parsed_angle) {
     case 270:
     case -90:
-        return (rot_angle_result){true, ANGLE_270};
+        return (angle_parse_result){true, ANGLE_270};
     case 180:
     case -180:
-        return (rot_angle_result){true, ANGLE_180};
+        return (angle_parse_result){true, ANGLE_180};
     case 90:
     case -270:
-        return (rot_angle_result){true, ANGLE_90};
+        return (angle_parse_result){true, ANGLE_90};
     case 0:
-        return (rot_angle_result){true, ANGLE_0};
+        return (angle_parse_result){true, ANGLE_0};
     default:
         return rot_angle_err;
     }
