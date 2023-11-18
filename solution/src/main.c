@@ -45,47 +45,52 @@ int main(int argc, char const **argv) {
     const ArgsParseResult args = parse_cmd_args(argc, argv);
     if (args.status == CMD_ARGS_NOT_ENOUGH) {
         ERROR(MSG_WRONG_USAGE);
-        goto error;
+        exit(1);
+
     } else if (args.status == CMD_ARGS_BAD_ANGLE) {
         ERROR(MSG_INCORRECT_ANGLE);
-        goto error;
+        exit(2);
     }
 
     const ReadBmpResult read_result = read_bmp(args._.source_image_path);
     if (read_result.status != IO_OK) {
         ERRORF(MSG_CANNOT_READ, args._.source_image_path);
-        goto error;
+        exit(3);
+
     } else if (read_result._.status != FROM_BMP_OK) {
         switch (read_result._.status) {
         case FROM_BMP_INVALID_HEADER:
             ERROR(MSG_BAD_HEADER);
-            goto error;
+            break;
         case FROM_BMP_UNSUPPORTED_FORMAT:
             ERROR(MSG_UNSUPPORTED_FORMAT);
-            goto error;
+            break;
         case FROM_BMP_UNSUPPORTED_COLOR_DEPTH:
             ERROR(MSG_UNSUPPORTED_COLOR_DEPTH);
-            goto error;
+            break;
         case FROM_BMP_UNSUPPORTED_COMPRESSION:
             ERROR(MSG_UNSUPPORTED_COMPRESSION);
-            goto error;
+            break;
         case FROM_BMP_INVALID_PIXELS:
             ERROR(MSG_BAD_FILE);
-            goto error;
+            break;
         case FROM_BMP_CANNOT_ALLOC_MEMORY:
             ERROR(MSG_LARGE_FILE);
-            goto error;
+            break;
         default:
             ERROR(MSG_BMP_PARSING_ERROR);
-            goto error;
+            break;
         }
+        exit(4);
     }
 
     Image img = read_result._._;
     MaybeImage rotated_img = rotate_image(img, args._.angle);
     if (!rotated_img.status) {
         ERROR(MSG_LARGE_FILE);
-        goto cleanup;
+        destroy_image(img);
+        destroy_image(rotated_img._);
+        exit(5);
     }
 
     const WriteBmpResult write_result = write_bmp(
@@ -93,18 +98,16 @@ int main(int argc, char const **argv) {
     );
     if (write_result.status != IO_OK || write_result._ != TO_BMP_OK) {
         ERRORF(MSG_CANNOT_WRITE, args._.output_image_path);
-        goto cleanup;
+        destroy_image(img);
+        destroy_image(rotated_img._);
+        exit(6);
     };
 
     INFOF(MSG_SUCCESS, args._.output_image_path);
 
     DEBUG("Clean image data...");
 
-    return 0;
-
-cleanup:
     destroy_image(img);
     destroy_image(rotated_img._);
-error:
-    exit(1);
+    return 0;
 }
