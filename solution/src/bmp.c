@@ -104,8 +104,8 @@ FromBmpResult from_bmp(FILE *in) {
     }
     Pixel *row_ptr = img.pixels;
     for (uint32_t row = 0; row < header.bi.height; row++) {
-        const size_t pixels_read = fread(
-            row_ptr, PIXEL_SIZE, header.bi.width, in);
+        const size_t pixels_read =
+            fread(row_ptr, PIXEL_SIZE, header.bi.width, in);
         if (pixels_read != header.bi.width) {
             return (FromBmpResult){FROM_BMP_INVALID_PIXELS};
         }
@@ -121,10 +121,13 @@ size_t _calc_file_size(uint32_t width, uint32_t height, uint32_t padding) {
     return BMP_HEADER_SIZE + (width * PIXEL_SIZE + padding) * height;
 }
 
-ToBmpStatus to_bmp(FILE *out, const Image img) {
-    const uint8_t padding = _calc_padding(img.width * PIXEL_SIZE);
-    const size_t file_size = _calc_file_size(img.width, img.height, padding);
-    BmpHeader header = {
+void _build_header(
+    BmpHeader *header,
+    uint32_t width,
+    uint32_t height,
+    size_t file_size
+) {
+    *header = (BmpHeader){
         .bf =
             {
                 .type = BMP_FILE_TYPE,
@@ -135,8 +138,8 @@ ToBmpStatus to_bmp(FILE *out, const Image img) {
         .bi =
             {
                 .header_size = BI_HEADER_SIZE,
-                .width = img.width,
-                .height = img.height,
+                .width = width,
+                .height = height,
                 .planes = BI_PLANES,
                 .bit_count = COLOR_DEPTH,
                 .image_size = BI_DUMMY_SIZE,
@@ -146,13 +149,22 @@ ToBmpStatus to_bmp(FILE *out, const Image img) {
                 .colors_important = BI_ALL_COLORS,
             },
     };
+}
+
+ToBmpStatus to_bmp(FILE *out, const Image img) {
+    const uint8_t padding = _calc_padding(img.width * PIXEL_SIZE);
+    const size_t file_size = _calc_file_size(img.width, img.height, padding);
+
+    BmpHeader header;
+    _build_header(&header, img.width, img.height, file_size);
     if (fwrite(&header, header.bf.pixel_array_offset, 1, out) != 1) {
         return TO_BMP_FAILED;
     }
+
     Pixel *row_ptr = img.pixels;
     for (uint32_t row = 0; row < header.bi.height; row++) {
-        const size_t pixels_written = fwrite(
-            row_ptr, PIXEL_SIZE, header.bi.width, out);
+        const size_t pixels_written =
+            fwrite(row_ptr, PIXEL_SIZE, header.bi.width, out);
         if (pixels_written != header.bi.width) {
             return TO_BMP_FAILED;
         }
