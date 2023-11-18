@@ -14,3 +14,7 @@ Image create_image(uint32_t width, uint32_t height) {
         .pixels = malloc(calc_image_size(height, width)),
     };
 }
+
+void destroy_image(Image img) {
+    free(img.pixels);
+}

@@ -46,8 +46,8 @@ int main(int argc, char **argv) {
     write_bmp_result write_result = write_bmp(
         cmd_args._.output_image_path, rotated_img);
 
-    free(img.pixels);
-    free(rotated_img.pixels);
+    destroy_image(img);
+    destroy_image(rotated_img);
 
     return read_result.status || write_result.status;
 }
