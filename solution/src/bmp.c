@@ -59,7 +59,7 @@ bmp_header _HEADER = {0};
 #define PIXEL_SIZE sizeof(pixel)     // Pixel size in bytes
 #define COLOR_DEPTH (PIXEL_SIZE * 8) // 24 bits
 #define DPI_72 2835                  // Default image resolution
-const char PADDING_BYTE = '\0';
+const char PADDING_BYTES[4];         // Some data to fill paddings
 
 uint8_t calc_row_padding(size_t row_size) {
     return (4 - row_size % 4) % 4;
@@ -161,7 +161,7 @@ write_result to_bmp(FILE *out, image *img) {
         if (pixels_written != header.bi.width) {
             return WRITE_FAILED;
         }
-        if (fwrite(&PADDING_BYTE, padding, 1, out) != 1) {
+        if (fwrite(PADDING_BYTES, padding, 1, out) != 1) {
             return WRITE_FAILED;
         }
         row_ptr += header.bi.width;
