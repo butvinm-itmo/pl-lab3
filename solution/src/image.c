@@ -16,5 +16,8 @@ Image create_image(uint32_t width, uint32_t height) {
 }
 
 void destroy_image(Image img) {
-    free(img.pixels);
+    if (img.pixels != NULL) {
+        free(img.pixels);
+        img.pixels = NULL;
+    }
 }

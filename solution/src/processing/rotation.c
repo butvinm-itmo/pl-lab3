@@ -1,4 +1,5 @@
 #include "processing/rotation.h"
+
 #include "image.h"
 #include "processing/copy.h"
 
@@ -11,12 +12,14 @@ MaybeImpl(RotationAngle);
 MaybeRotationAngle parse_rotation_angle(char const *str) {
     char *endptr;
     errno = 0;
-    long parsed_angle = strtol(str, &endptr, 10);
+    const long angle = strtol(str, &endptr, 10);
+
     // Validation from docs (man strtol).
     if (errno != 0 || endptr == str || *endptr != '\0') {
         return NoneRotationAngle;
     }
-    switch (parsed_angle) {
+
+    switch (angle) {
     case 270:
     case -90:
         return SomeRotationAngle(ROT_ANGLE_270);
@@ -33,7 +36,7 @@ MaybeRotationAngle parse_rotation_angle(char const *str) {
     }
 }
 
-Image _rotate_90(Image img) {
+static Image _rotate_90(Image img) {
     Image new_image = create_image(img.height, img.width);
     // clang-format off
     foreach_pixel(
@@ -44,7 +47,7 @@ Image _rotate_90(Image img) {
     return new_image;
 }
 
-Image _rotate_180(Image img) {
+static Image _rotate_180(Image img) {
     Image new_image = create_image(img.width, img.height);
     // clang-format off
         foreach_pixel(
@@ -59,7 +62,7 @@ Image _rotate_180(Image img) {
     return new_image;
 }
 
-Image _rotate_270(Image img) {
+static Image _rotate_270(Image img) {
     Image new_image = create_image(img.height, img.width);
     // clang-format off
     foreach_pixel(
@@ -70,8 +73,8 @@ Image _rotate_270(Image img) {
     return new_image;
 }
 
+/* Rotate image data. */
 Image rotate_image(Image img, RotationAngle angle) {
-    /* Rotate image data. */
     switch (angle) {
     case ROT_ANGLE_0:
         return copy_image(img);

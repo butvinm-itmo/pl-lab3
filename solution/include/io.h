@@ -7,7 +7,7 @@
 
 /* IO operations statuses. */
 typedef enum {
-    /* Keep quite, everything is fine. */
+    /* Keep calm, everything is fine. */
     IO_OK = 0,
     /* Stream opening error. */
     IO_OPEN_ERR,

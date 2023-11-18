@@ -16,7 +16,7 @@
     }
 
 /* Pixel with 1-byte color depth. */
-typedef struct {
+typedef struct __attribute__((packed)) {
     uint8_t r, g, b;
 } Pixel;
 

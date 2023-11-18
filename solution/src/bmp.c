@@ -45,26 +45,28 @@ typedef struct __attribute__((packed)) {
     } bi;
 } BmpHeader;
 
+static const size_t PIXEL_SIZE = sizeof(Pixel); // Pixel size in bytes
+
 /* From BMP specification. */
 BmpHeader _HEADER = {0};
-#define BMP_FILE_TYPE 0x4D42              // Little-endian 'BM'
-#define BMP_RESERVED 0                    // Always 0
-#define BMP_HEADER_SIZE sizeof(_HEADER)   // size of full header
-#define BI_HEADER_SIZE sizeof(_HEADER.bi) // 40 bytes
-#define BI_RGB_COMPRESSION 0              // We support only uncompressed files
-#define BI_PLANES 1                       // Always 1
-#define BI_ALL_COLORS 0                   // Enable full color palette
-#define BI_DUMMY_SIZE 0              // Image size for not-compressed images
-#define PIXEL_SIZE sizeof(Pixel)     // Pixel size in bytes
-#define COLOR_DEPTH (PIXEL_SIZE * 8) // 24 bits
-#define DPI_72 2835                  // Default image resolution
-const char PADDING_BYTES[4];         // Some data to fill paddings
+static const uint16_t BMP_FILE_TYPE = 0x4D42;            // Little-endian 'BM'
+static const uint32_t BMP_RESERVED = 0;                  // Always 0
+static const size_t BMP_HEADER_SIZE = sizeof(_HEADER);   // size of full header
+static const size_t BI_HEADER_SIZE = sizeof(_HEADER.bi); // 40 bytes
+// We support only uncompressed files
+static const uint32_t BI_RGB_COMPRESSION = 0;
+static const uint16_t BI_PLANES = 1;     // Always 1
+static const uint32_t BI_ALL_COLORS = 0; // Enable full color palette
+static const uint32_t BI_DUMMY_SIZE = 0; // Image size for not-compressed images
+static const uint16_t COLOR_DEPTH = (PIXEL_SIZE * 8); // 24 bits
+static const uint32_t DPI_72 = 2835; // Default image resolution
+static const char PADDING_BYTES[4];  // Some data to fill paddings
 
-uint8_t _calc_padding(size_t row_size) {
+static uint8_t _calc_padding(size_t row_size) {
     return (4 - row_size % 4) % 4;
 }
 
-FromBmpStatus _validate_signature(BmpHeader *header) {
+static FromBmpStatus _validate_signature(BmpHeader *header) {
     if (header->bf.type != BMP_FILE_TYPE) {
         return FROM_BMP_UNSUPPORTED_FORMAT;
     }
@@ -86,17 +88,17 @@ FromBmpResult from_bmp(FILE *in) {
         return (FromBmpResult){FROM_BMP_INVALID_HEADER};
     }
 
-    FromBmpStatus signature_status = _validate_signature(&header);
+    const FromBmpStatus signature_status = _validate_signature(&header);
     if (signature_status != FROM_BMP_OK) {
         return (FromBmpResult){signature_status};
     }
-
-    const uint8_t padding = _calc_padding(header.bi.width * PIXEL_SIZE);
 
     Image img = create_image(header.bi.width, header.bi.height);
     if (img.pixels == NULL) {
         return (FromBmpResult){FROM_BMP_CANNOT_ALLOC_MEMORY};
     }
+
+    const uint8_t padding = _calc_padding(header.bi.width * PIXEL_SIZE);
 
     // Set cursor at pixels array.
     if (fseek(in, header.bf.pixel_array_offset, SEEK_SET) != 0) {
@@ -104,8 +106,9 @@ FromBmpResult from_bmp(FILE *in) {
     }
     Pixel *row_ptr = img.pixels;
     for (uint32_t row = 0; row < header.bi.height; row++) {
-        const size_t pixels_read =
-            fread(row_ptr, PIXEL_SIZE, header.bi.width, in);
+        const size_t pixels_read = fread(
+            row_ptr, PIXEL_SIZE, header.bi.width, in
+        );
         if (pixels_read != header.bi.width) {
             return (FromBmpResult){FROM_BMP_INVALID_PIXELS};
         }
@@ -117,17 +120,15 @@ FromBmpResult from_bmp(FILE *in) {
     return (FromBmpResult){FROM_BMP_OK, img};
 }
 
-size_t _calc_file_size(uint32_t width, uint32_t height, uint32_t padding) {
+static size_t
+_calc_file_size(uint32_t width, uint32_t height, uint32_t padding) {
     return BMP_HEADER_SIZE + (width * PIXEL_SIZE + padding) * height;
 }
 
-void _build_header(
-    BmpHeader *header,
-    uint32_t width,
-    uint32_t height,
-    size_t file_size
-) {
-    *header = (BmpHeader){
+/* Would be inlined, so it's fine to return large struct. */
+static BmpHeader
+_build_header(uint32_t width, uint32_t height, size_t file_size) {
+    return (BmpHeader){
         .bf =
             {
                 .type = BMP_FILE_TYPE,
@@ -155,16 +156,16 @@ ToBmpStatus to_bmp(FILE *out, Image img) {
     const uint8_t padding = _calc_padding(img.width * PIXEL_SIZE);
     const size_t file_size = _calc_file_size(img.width, img.height, padding);
 
-    BmpHeader header;
-    _build_header(&header, img.width, img.height, file_size);
+    const BmpHeader header = _build_header(img.width, img.height, file_size);
     if (fwrite(&header, header.bf.pixel_array_offset, 1, out) != 1) {
         return TO_BMP_FAILED;
     }
 
     Pixel *row_ptr = img.pixels;
     for (uint32_t row = 0; row < header.bi.height; row++) {
-        const size_t pixels_written =
-            fwrite(row_ptr, PIXEL_SIZE, header.bi.width, out);
+        const size_t pixels_written = fwrite(
+            row_ptr, PIXEL_SIZE, header.bi.width, out
+        );
         if (pixels_written != header.bi.width) {
             return TO_BMP_FAILED;
         }

@@ -1,13 +1,13 @@
 #ifndef BMP_H
 #define BMP_H
 
+#include "image.h"
+#include "result.h"
+
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "image.h"
-#include "result.h"
 
 typedef enum {
     /* Image read properly. */
@@ -31,7 +31,7 @@ Result(FromBmpResult, Image, FromBmpStatus);
 /* Read BMP image from file. */
 FromBmpResult from_bmp(FILE *in);
 
-typedef enum class {
+typedef enum {
     /* Image read properly. */
     TO_BMP_OK = 0,
     /* Writing tio file failed. */

@@ -5,10 +5,10 @@
 
 LogLevel LOG_LEVEL = LOG_ERROR;
 
-const char *LEVEL_LABELS[] = {
+static const char *LEVEL_LABELS[] = {
     [LOG_INFO] = "[INFO] ",
     [LOG_ERROR] = "[ERROR] ",
-    [LOG_DEBUG] = "DEBUG ",
+    [LOG_DEBUG] = "[DEBUG] ",
 };
 
 void flogf(FILE *stream, LogLevel level, char const *message, ...) {

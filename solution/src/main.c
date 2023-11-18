@@ -1,8 +1,3 @@
-#include <inttypes.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "bmp.h"
 #include "cmd.h"
 #include "io.h"
@@ -11,38 +6,43 @@
 #include "processing/rotation.h"
 #include "result.h"
 
-IO_RESULT(read_bmp_result, FromBmpResult);
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-read_bmp_result read_bmp(char const *img_path) {
-    FILE *file = fopen(img_path, "r");
+IO_RESULT(ReadBmpResult, FromBmpResult);
+
+static ReadBmpResult read_bmp(char const *img_path) {
+    FILE *file = fopen(img_path, "rb");
     if (file == NULL) {
-        return (read_bmp_result){IO_OPEN_ERR};
+        return (ReadBmpResult){IO_OPEN_ERR};
     }
-    FromBmpResult result = from_bmp(file);
+    const FromBmpResult result = from_bmp(file);
     if (fclose(file) != 0) {
-        return (read_bmp_result){IO_CLOSE_ERR};
+        return (ReadBmpResult){IO_CLOSE_ERR};
     }
-    return (read_bmp_result){IO_OK, result};
+    return (ReadBmpResult){IO_OK, result};
 }
 
-IO_RESULT(write_bmp_result, ToBmpStatus);
+IO_RESULT(WriteBmpResult, ToBmpStatus);
 
-write_bmp_result write_bmp(char const *img_path, Image img) {
-    FILE *file = fopen(img_path, "w");
+static WriteBmpResult write_bmp(char const *img_path, Image img) {
+    FILE *file = fopen(img_path, "wb");
     if (file == NULL) {
-        return (write_bmp_result){IO_OPEN_ERR};
+        return (WriteBmpResult){IO_OPEN_ERR};
     }
-    ToBmpStatus status = to_bmp(file, img);
+    const ToBmpStatus status = to_bmp(file, img);
     if (fclose(file) != 0) {
-        return (write_bmp_result){IO_CLOSE_ERR};
+        return (WriteBmpResult){IO_CLOSE_ERR};
     }
-    return (write_bmp_result){IO_OK, status};
+    return (WriteBmpResult){IO_OK, status};
 }
 
 int main(int argc, char const **argv) {
     LOG_LEVEL = LOG_INFO;
 
-    ArgsParseResult args = parse_cmd_args(argc, argv);
+    const ArgsParseResult args = parse_cmd_args(argc, argv);
     if (args.status == CMD_ARGS_NOT_ENOUGH) {
         ERROR(MSG_WRONG_USAGE);
         exit(1);
@@ -51,7 +51,7 @@ int main(int argc, char const **argv) {
         exit(1);
     }
 
-    read_bmp_result read_result = read_bmp(args._.source_image_path);
+    const ReadBmpResult read_result = read_bmp(args._.source_image_path);
     if (read_result.status != IO_OK) {
         ERRORF(MSG_CANNOT_READ, args._.source_image_path);
         exit(1);
@@ -85,12 +85,14 @@ int main(int argc, char const **argv) {
     Image img = read_result._._;
     Image rotated_img = rotate_image(img, args._.angle);
 
-    write_bmp_result write_result = write_bmp(
+    const WriteBmpResult write_result = write_bmp(
         args._.output_image_path,
         rotated_img
     );
     if (write_result.status != IO_OK || write_result._ != TO_BMP_OK) {
         ERRORF(MSG_CANNOT_WRITE, args._.output_image_path);
+        destroy_image(img);
+        destroy_image(rotated_img);
         exit(1);
     };
 
