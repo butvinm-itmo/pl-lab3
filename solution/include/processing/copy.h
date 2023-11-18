@@ -4,6 +4,6 @@
 #include "image.h"
 
 /* Create full image copy. */
-image copy_image(const image img);
+Image copy_image(const Image img);
 
 #endif

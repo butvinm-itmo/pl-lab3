@@ -3,7 +3,7 @@
 
 #include "result.h"
 
-#define IO_RESULT(name, value_t) RESULT(name, value_t, io_state)
+#define IO_RESULT(name, value_t) RESULT(name, value_t, IOState)
 
 /* IO operations statuses. */
 typedef enum {
@@ -13,6 +13,6 @@ typedef enum {
     IO_OPEN_ERR,
     /* Stream closing error. You may lost written data probably. */
     IO_CLOSE_ERR,
-} io_state;
+} IOState;
 
 #endif

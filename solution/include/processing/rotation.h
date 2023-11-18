@@ -8,19 +8,18 @@
 
 /* Possible image rotation angles. */
 typedef enum {
-    ANGLE_0 = 0,
-    ANGLE_90 = 90,
-    ANGLE_180 = 180,
-    ANGLE_270 = 270,
-} rot_angle;
+    ROT_ANGLE_0 = 0,
+    ROT_ANGLE_90 = 90,
+    ROT_ANGLE_180 = 180,
+    ROT_ANGLE_270 = 270,
+} RotationAngle;
 
-RESULT(angle_parse_result, rot_angle, bool)
-static const angle_parse_result rot_angle_err = {.status = false};
+RESULT(AngleParseResult, RotationAngle, bool)
 
 /* Parse rotation angle from string. */
-angle_parse_result parse_rot_angle(char *str);
+AngleParseResult parse_rotation_angle(char *str);
 
 /* Rotate image date inplace. */
-image rotate_image(const image img, rot_angle angle);
+Image rotate_image(const Image img, RotationAngle angle);
 
 #endif

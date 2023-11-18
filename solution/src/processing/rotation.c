@@ -1,49 +1,50 @@
+#include "processing/rotation.h"
 #include "image.h"
 #include "processing/copy.h"
-#include "processing/rotation.h"
 
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 
 /* Parse rotation angle from string. */
-angle_parse_result parse_rot_angle(char *str) {
+AngleParseResult parse_rotation_angle(char *str) {
     char *endptr;
     errno = 0;
     long parsed_angle = strtol(str, &endptr, 10);
     // Validation from docs (man strtol).
     if (errno != 0 || endptr == str || *endptr != '\0') {
-        return rot_angle_err;
+        return (AngleParseResult){false};
     }
     switch (parsed_angle) {
     case 270:
     case -90:
-        return (angle_parse_result){true, ANGLE_270};
+        return (AngleParseResult){true, ROT_ANGLE_270};
     case 180:
     case -180:
-        return (angle_parse_result){true, ANGLE_180};
+        return (AngleParseResult){true, ROT_ANGLE_180};
     case 90:
     case -270:
-        return (angle_parse_result){true, ANGLE_90};
+        return (AngleParseResult){true, ROT_ANGLE_90};
     case 0:
-        return (angle_parse_result){true, ANGLE_0};
+        return (AngleParseResult){true, ROT_ANGLE_0};
     default:
-        return rot_angle_err;
+        return (AngleParseResult){false};
     }
 }
 
-image rotate_90(const image img) {
-    image new_image = create_image(img.height, img.width);
+Image _rotate_90(const Image img) {
+    Image new_image = create_image(img.height, img.width);
     // clang-format off
     foreach_pixel(
         img,
         *pixel_at(new_image, j, i) = *pixel_at(img, img.width - 1 - i, j);
     );
+    // clang-format on
     return new_image;
 }
 
-image rotate_180(const image img) {
-    image new_image = create_image(img.width, img.height);
+Image _rotate_180(const Image img) {
+    Image new_image = create_image(img.width, img.height);
     // clang-format off
         foreach_pixel(
             img,
@@ -57,8 +58,8 @@ image rotate_180(const image img) {
     return new_image;
 }
 
-image rotate_270(const image img) {
-    image new_image = create_image(img.height, img.width);
+Image _rotate_270(const Image img) {
+    Image new_image = create_image(img.height, img.width);
     // clang-format off
     foreach_pixel(
         img,
@@ -68,16 +69,16 @@ image rotate_270(const image img) {
     return new_image;
 }
 
-image rotate_image(const image img, rot_angle angle) {
+Image rotate_image(const Image img, RotationAngle angle) {
     /* Rotate image data. */
     switch (angle) {
-    case ANGLE_0:
+    case ROT_ANGLE_0:
         return copy_image(img);
-    case ANGLE_90:
-        return rotate_90(img);
-    case ANGLE_180:
-        return rotate_180(img);
-    case ANGLE_270:
-        return rotate_270(img);
+    case ROT_ANGLE_90:
+        return _rotate_90(img);
+    case ROT_ANGLE_180:
+        return _rotate_180(img);
+    case ROT_ANGLE_270:
+        return _rotate_270(img);
     }
 }

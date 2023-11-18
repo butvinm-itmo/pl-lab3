@@ -27,21 +27,21 @@ typedef enum {
     FROM_BMP_BAD_IMAGE_PTR,
     /* Not enough memory for image */
     FROM_BMP_CANNOT_ALLOC_MEMORY,
-} from_bmp_status;
+} FromBmpStatus;
 
-RESULT(from_bmp_result, image, from_bmp_status)
+RESULT(FromBmpResult, Image, FromBmpStatus)
 
 /* Read BMP image from file. */
-from_bmp_result from_bmp(FILE *in);
+FromBmpResult from_bmp(FILE *in);
 
 typedef enum class {
     /* Image read properly. */
     TO_BMP_OK = 0,
     /* Writing tio file failed. */
     TO_BMP_FAILED,
-} to_bmp_status;
+} ToBmpStatus;
 
 /* Write image to file in BMP format. */
-to_bmp_status to_bmp(FILE *out, const image img);
+ToBmpStatus to_bmp(FILE *out, const Image img);
 
 #endif /* BMP_H */
