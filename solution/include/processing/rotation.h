@@ -14,7 +14,7 @@ typedef enum {
     ROT_ANGLE_270 = 270,
 } RotationAngle;
 
-RESULT(AngleParseResult, RotationAngle, bool)
+Result(AngleParseResult, RotationAngle, bool);
 
 /* Parse rotation angle from string. */
 AngleParseResult parse_rotation_angle(char *str);

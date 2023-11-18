@@ -21,7 +21,7 @@ typedef enum {
     CMD_ARGS_BAD_ANGLE,
 } ArgsParseStatus;
 
-RESULT(ArgsParseResult, CmdArgs, ArgsParseStatus)
+Result(ArgsParseResult, CmdArgs, ArgsParseStatus);
 
 /* Parse command line args. */
 ArgsParseResult parse_cmd_args(int argc, char **argv);

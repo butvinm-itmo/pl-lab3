@@ -13,7 +13,7 @@ ArgsParseResult parse_cmd_args(int argc, char **argv) {
         {
             .source_image_path = argv[1],
             .output_image_path = argv[2],
-            .angle = angle.value,
+            .angle = angle._,
         },
     };
 }

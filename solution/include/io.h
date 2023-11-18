@@ -3,7 +3,7 @@
 
 #include "result.h"
 
-#define IO_RESULT(name, value_t) RESULT(name, value_t, IOState)
+#define IO_RESULT(name, value_t) Result(name, value_t, IOState)
 
 /* IO operations statuses. */
 typedef enum {

@@ -29,7 +29,7 @@ typedef enum {
     FROM_BMP_CANNOT_ALLOC_MEMORY,
 } FromBmpStatus;
 
-RESULT(FromBmpResult, Image, FromBmpStatus)
+Result(FromBmpResult, Image, FromBmpStatus);
 
 /* Read BMP image from file. */
 FromBmpResult from_bmp(FILE *in);
