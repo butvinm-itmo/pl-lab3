@@ -3,32 +3,33 @@
 #include "processing/copy.h"
 
 #include <errno.h>
-#include <stdbool.h>
 #include <stdio.h>
 
+MaybeImpl(RotationAngle);
+
 /* Parse rotation angle from string. */
-AngleParseResult parse_rotation_angle(char *str) {
+MaybeRotationAngle parse_rotation_angle(char *str) {
     char *endptr;
     errno = 0;
     long parsed_angle = strtol(str, &endptr, 10);
     // Validation from docs (man strtol).
     if (errno != 0 || endptr == str || *endptr != '\0') {
-        return (AngleParseResult){false};
+        return NoneRotationAngle;
     }
     switch (parsed_angle) {
     case 270:
     case -90:
-        return (AngleParseResult){true, ROT_ANGLE_270};
+        return SomeRotationAngle(ROT_ANGLE_270);
     case 180:
     case -180:
-        return (AngleParseResult){true, ROT_ANGLE_180};
+        return SomeRotationAngle(ROT_ANGLE_180);
     case 90:
     case -270:
-        return (AngleParseResult){true, ROT_ANGLE_90};
+        return SomeRotationAngle(ROT_ANGLE_90);
     case 0:
-        return (AngleParseResult){true, ROT_ANGLE_0};
+        return SomeRotationAngle(ROT_ANGLE_0);
     default:
-        return (AngleParseResult){false};
+        return NoneRotationAngle;
     }
 }
 

@@ -4,8 +4,6 @@
 #include "image.h"
 #include "result.h"
 
-#include <stdbool.h>
-
 /* Possible image rotation angles. */
 typedef enum {
     ROT_ANGLE_0 = 0,
@@ -14,10 +12,10 @@ typedef enum {
     ROT_ANGLE_270 = 270,
 } RotationAngle;
 
-Result(AngleParseResult, RotationAngle, bool);
+Maybe(RotationAngle);
 
 /* Parse rotation angle from string. */
-AngleParseResult parse_rotation_angle(char *str);
+MaybeRotationAngle parse_rotation_angle(char *str);
 
 /* Rotate image date inplace. */
 Image rotate_image(const Image img, RotationAngle angle);
