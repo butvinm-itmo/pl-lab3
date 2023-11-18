@@ -3,10 +3,10 @@ IndentWidth: 4
 UseTab: Never
 ColumnLimit: 80
 AllowShortFunctionsOnASingleLine: None
-AlignAfterOpenBracket: AlwaysBreak
+AlignAfterOpenBracket: BlockIndent
 PenaltyBreakAssignment: 200
 PenaltyBreakBeforeFirstCallParameter: 0
-AllowAllArgumentsOnNextLine: true
-AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
 BinPackArguments: false
 BinPackParameters: false
