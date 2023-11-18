@@ -4,6 +4,6 @@
 #include "image.h"
 
 /* Create full image copy. */
-Image copy_image(Image img);
+MaybeImage copy_image(Image img);
 
 #endif

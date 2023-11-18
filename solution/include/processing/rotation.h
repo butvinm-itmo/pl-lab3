@@ -17,7 +17,7 @@ Maybe(RotationAngle);
 /* Parse rotation angle from string. */
 MaybeRotationAngle parse_rotation_angle(char const *str);
 
-/* Rotate image date inplace. */
-Image rotate_image(Image img, RotationAngle angle);
+/* Rotate image. */
+MaybeImage rotate_image(Image img, RotationAngle angle);
 
 #endif

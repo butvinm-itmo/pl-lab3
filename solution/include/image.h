@@ -1,6 +1,8 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
+#include "result.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -26,13 +28,15 @@ typedef struct {
     Pixel *pixels;
 } Image;
 
+Maybe(Image);
+
 /* Return required size for image pixels data. */
 size_t calc_image_size(uint32_t width, uint32_t height);
 
 /* Create image structure with pre-allocated data.
  * If memory cannot be allocated, image pixels is NULL.
  */
-Image create_image(uint32_t width, uint32_t height);
+MaybeImage create_image(uint32_t width, uint32_t height);
 
 /* Free image data. */
 void destroy_image(Image img);

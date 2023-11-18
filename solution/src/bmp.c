@@ -93,8 +93,8 @@ FromBmpResult from_bmp(FILE *in) {
         return (FromBmpResult){signature_status};
     }
 
-    Image img = create_image(header.bi.width, header.bi.height);
-    if (img.pixels == NULL) {
+    MaybeImage img = create_image(header.bi.width, header.bi.height);
+    if (!img.status) {
         return (FromBmpResult){FROM_BMP_CANNOT_ALLOC_MEMORY};
     }
 
@@ -104,7 +104,7 @@ FromBmpResult from_bmp(FILE *in) {
     if (fseek(in, header.bf.pixel_array_offset, SEEK_SET) != 0) {
         return (FromBmpResult){FROM_BMP_INVALID_PIXELS};
     }
-    Pixel *row_ptr = img.pixels;
+    Pixel *row_ptr = img._.pixels;
     for (uint32_t row = 0; row < header.bi.height; row++) {
         const size_t pixels_read = fread(
             row_ptr, PIXEL_SIZE, header.bi.width, in
@@ -117,7 +117,7 @@ FromBmpResult from_bmp(FILE *in) {
         }
         row_ptr += header.bi.width;
     }
-    return (FromBmpResult){FROM_BMP_OK, img};
+    return (FromBmpResult){FROM_BMP_OK, img._};
 }
 
 static size_t
