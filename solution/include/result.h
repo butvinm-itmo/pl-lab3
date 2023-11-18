@@ -6,6 +6,6 @@
     typedef struct {                                                           \
         status_t status;                                                       \
         value_t value;                                                         \
-    } (name);
+    }(name);
 
 #endif
