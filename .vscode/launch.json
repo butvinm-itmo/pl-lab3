@@ -6,7 +6,11 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/solution/image-transformer", // Update with your executable name
-            "args": [],
+            "args": [
+                "./tester/tests/3/input.bmp",
+                "./output.bmp",
+                "$(cat ./tester/tests/3/angle)"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

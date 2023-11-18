@@ -1,3 +1,21 @@
 {
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.codeAnalysis.runAutomatically": true,
+    "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+    "files.associations": {
+        "*.spec": "python",
+        "*.abl": "python",
+        "*.tfstate": "json",
+        "Spacefile": "yaml",
+        ".spaceignore": "git",
+        ".raf": "xml",
+        "bmp.h": "c",
+        "cstdlib": "c",
+        "stdio.h": "c",
+        "valarray": "c",
+        "errno.h": "c",
+        "stdlib.h": "c"
+    },
+    "C_Cpp.formatting": "clangFormat",
+    "C_Cpp.clang_format_path": "/bin/clang-format"
 }
