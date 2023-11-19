@@ -1,6 +1,7 @@
 #include "_cmd.h"
 #include "_messages.h"
 #include "bmp.h"
+#include "exit_codes.h"
 #include "image_io.h"
 #include "log.h"
 #include "processing/rotation.h"
@@ -10,19 +11,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-typedef enum {
-    /* Program done successfully. */
-    EXIT_OK = EXIT_SUCCESS,
-    /* Error caused by wrong usage. */
-    EXIT_WRONG_USAGE,
-    /* Error during image reading. */
-    EXIT_READ,
-    /* Error during processing. */
-    EXIT_PROC,
-    /* Error during image saving. */
-    EXIT_WRITE,
-} ExitCodes;
 
 typedef struct {
     ArgsParseResult args;
