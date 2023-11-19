@@ -34,8 +34,10 @@ FromBmpResult from_bmp(FILE *in);
 typedef enum {
     /* Image read properly. */
     TO_BMP_OK = 0,
+    /* Image data is null. */
+    TO_BMP_BAD_IMAGE_DATA,
     /* Writing tio file failed. */
-    TO_BMP_FAILED,
+    TO_BMP_WRITE_FAILED,
 } ToBmpStatus;
 
 /* Write image to file in BMP format. */

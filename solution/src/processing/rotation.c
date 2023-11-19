@@ -52,10 +52,9 @@ static MaybeImage _create_rotated_image(Image img, RotationAngle angle) {
 /* Rotate image data. */
 MaybeImage rotate_image(Image img, RotationAngle angle) {
     MaybeImage new_image = _create_rotated_image(img, angle);
-    if (!new_image.status) {
+    if (!new_image.status || img.pixels == NULL) {
         return NoneImage;
     }
-
     // clang-format off
     switch (angle) {
     case ROT_ANGLE_0:
@@ -70,11 +69,7 @@ MaybeImage rotate_image(Image img, RotationAngle angle) {
     case ROT_ANGLE_180:
         foreach_pixel(
             img,
-            *pixel_at(new_image._, i, j) = *pixel_at(
-                img,
-                (img.width - 1 - i),
-                img.height - 1 - j
-            );
+            *pixel_at(new_image._, i, j) = *pixel_at(img, (img.width - 1 - i), img.height - 1 - j);
         );
         break;
     case ROT_ANGLE_270:

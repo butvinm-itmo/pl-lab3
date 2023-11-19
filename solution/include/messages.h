@@ -19,6 +19,8 @@ static const char *MSG_BAD_FILE = "Probably, your file is lost or corrupted.";
 static const char
     *MSG_LARGE_FILE = "I not sure I can fit so large file (,,>﹏<,,)";
 static const char *MSG_BMP_PARSING_ERROR = "Unknown error during BMP parsing.";
+static const char
+    *MSG_BAD_IMAGE_DATA = "Image data is corrupted. Probably internal error.";
 static const char *MSG_CANNOT_WRITE = "Cannot write %s.";
 static const char *MSG_SUCCESS = "Transformed image successfully saved in %s";
 

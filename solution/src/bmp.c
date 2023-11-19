@@ -158,7 +158,7 @@ ToBmpStatus to_bmp(FILE *out, Image img) {
 
     const BmpHeader header = _build_header(img.width, img.height, file_size);
     if (fwrite(&header, header.bf.pixel_array_offset, 1, out) != 1) {
-        return TO_BMP_FAILED;
+        return TO_BMP_WRITE_FAILED;
     }
 
     Pixel *row_ptr = img.pixels;
@@ -167,10 +167,10 @@ ToBmpStatus to_bmp(FILE *out, Image img) {
             row_ptr, PIXEL_SIZE, header.bi.width, out
         );
         if (pixels_written != header.bi.width) {
-            return TO_BMP_FAILED;
+            return TO_BMP_WRITE_FAILED;
         }
         if (fwrite(PADDING_BYTES, padding, 1, out) != 1) {
-            return TO_BMP_FAILED;
+            return TO_BMP_WRITE_FAILED;
         }
         row_ptr += header.bi.width;
     }

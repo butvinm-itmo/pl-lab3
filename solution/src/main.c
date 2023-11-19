@@ -96,16 +96,19 @@ int main(int argc, char const **argv) {
     const WriteBmpResult write_result = write_bmp(
         args._.output_image_path, rotated_img._
     );
-    if (write_result.status != IO_OK || write_result._ != TO_BMP_OK) {
+    if (write_result.status != IO_OK || write_result._ == TO_BMP_WRITE_FAILED) {
         ERRORF(MSG_CANNOT_WRITE, args._.output_image_path);
         destroy_image(img);
         destroy_image(rotated_img._);
         exit(6);
-    };
+    } else if (write_result._ == TO_BMP_BAD_IMAGE_DATA) {
+        ERROR(MSG_BAD_IMAGE_DATA);
+        destroy_image(img);
+        destroy_image(rotated_img._);
+        exit(6);
+    }
 
     INFOF(MSG_SUCCESS, args._.output_image_path);
-
-    DEBUG("Clean image data...");
 
     destroy_image(img);
     destroy_image(rotated_img._);
