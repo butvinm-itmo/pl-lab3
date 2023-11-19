@@ -1,4 +1,5 @@
 #include "_cmd.h"
+#include "_context.h"
 #include "_messages.h"
 #include "bmp.h"
 #include "exit_codes.h"
@@ -11,23 +12,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-typedef struct {
-    ArgsParseResult args;
-    ImageOpenResult read_result;
-    ImageSaveResult write_result;
-    MaybeImage rotated_img;
-    Image source_img;
-} Context;
-
-#define CONTEXT_FMT                                                            \
-    "{\n  args: %d\n  read: %d\n  write: %d\n  rotated: %p\n  source: "        \
-    "%p\n}\n"
-
-#define CONTEXT_FMT_ARGS(context)                                              \
-    (context).args.status, (context).read_result.status,                       \
-        (context).write_result.status, (void *)(context).rotated_img._.pixels, \
-        (void *)(context).source_img.pixels
 
 static void _exit(Context *context, int8_t code) {
     DEBUG("Exit and clear resources.");
