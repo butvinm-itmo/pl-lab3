@@ -2,6 +2,7 @@
 #define BMP_H
 
 #include "image.h"
+#include "image_io.h"
 #include "result.h"
 
 #include <inttypes.h>
@@ -26,10 +27,8 @@ typedef enum {
     FROM_BMP_CANNOT_ALLOC_MEMORY,
 } FromBmpStatus;
 
-Result(FromBmpResult, Image, FromBmpStatus);
-
 /* Read BMP image from file. */
-FromBmpResult from_bmp(FILE *in);
+ImageReaderResult from_bmp(FILE *in);
 
 typedef enum {
     /* Image read properly. */
@@ -41,6 +40,6 @@ typedef enum {
 } ToBmpStatus;
 
 /* Write image to file in BMP format. */
-ToBmpStatus to_bmp(FILE *out, Image img);
+ImageWriterResult to_bmp(FILE *out, Image img);
 
 #endif /* BMP_H */

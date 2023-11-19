@@ -1,5 +1,7 @@
 #include "bmp.h"
 
+#include "image_io.h"
+
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -82,27 +84,27 @@ static FromBmpStatus _validate_signature(BmpHeader *header) {
     return FROM_BMP_OK;
 }
 
-FromBmpResult from_bmp(FILE *in) {
+ImageReaderResult from_bmp(FILE *in) {
     BmpHeader header;
     if (fread(&header, sizeof(header), 1, in) != 1) {
-        return (FromBmpResult){FROM_BMP_INVALID_HEADER};
+        return (ImageReaderResult){FROM_BMP_INVALID_HEADER};
     }
 
     const FromBmpStatus signature_status = _validate_signature(&header);
     if (signature_status != FROM_BMP_OK) {
-        return (FromBmpResult){signature_status};
+        return (ImageReaderResult){signature_status};
     }
 
     MaybeImage img = create_image(header.bi.width, header.bi.height);
     if (!img.status) {
-        return (FromBmpResult){FROM_BMP_CANNOT_ALLOC_MEMORY};
+        return (ImageReaderResult){FROM_BMP_CANNOT_ALLOC_MEMORY};
     }
 
     const uint8_t padding = _calc_padding(header.bi.width * PIXEL_SIZE);
 
     // Set cursor at pixels array.
     if (fseek(in, header.bf.pixel_array_offset, SEEK_SET) != 0) {
-        return (FromBmpResult){FROM_BMP_INVALID_PIXELS};
+        return (ImageReaderResult){FROM_BMP_INVALID_PIXELS};
     }
     Pixel *row_ptr = img._.pixels;
     for (uint32_t row = 0; row < header.bi.height; row++) {
@@ -110,24 +112,30 @@ FromBmpResult from_bmp(FILE *in) {
             row_ptr, PIXEL_SIZE, header.bi.width, in
         );
         if (pixels_read != header.bi.width) {
-            return (FromBmpResult){FROM_BMP_INVALID_PIXELS};
+            return (ImageReaderResult){FROM_BMP_INVALID_PIXELS};
         }
         if (fseek(in, padding, SEEK_CUR) != 0) {
-            return (FromBmpResult){FROM_BMP_INVALID_PIXELS};
+            return (ImageReaderResult){FROM_BMP_INVALID_PIXELS};
         }
         row_ptr += header.bi.width;
     }
-    return (FromBmpResult){FROM_BMP_OK, img._};
+    return (ImageReaderResult){FROM_BMP_OK, img._};
 }
 
-static size_t
-_calc_file_size(uint32_t width, uint32_t height, uint32_t padding) {
+static size_t _calc_file_size(
+    uint32_t width,
+    uint32_t height,
+    uint32_t padding
+) {
     return BMP_HEADER_SIZE + (width * PIXEL_SIZE + padding) * height;
 }
 
 /* Would be inlined, so it's fine to return large struct. */
-static BmpHeader
-_build_header(uint32_t width, uint32_t height, size_t file_size) {
+static BmpHeader _build_header(
+    uint32_t width,
+    uint32_t height,
+    size_t file_size
+) {
     return (BmpHeader){
         .bf =
             {
@@ -152,7 +160,7 @@ _build_header(uint32_t width, uint32_t height, size_t file_size) {
     };
 }
 
-ToBmpStatus to_bmp(FILE *out, Image img) {
+ImageWriterResult to_bmp(FILE *out, Image img) {
     const uint8_t padding = _calc_padding(img.width * PIXEL_SIZE);
     const size_t file_size = _calc_file_size(img.width, img.height, padding);
 

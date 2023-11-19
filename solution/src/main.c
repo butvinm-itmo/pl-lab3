@@ -1,6 +1,7 @@
 #include "_cmd.h"
 #include "_messages.h"
 #include "bmp.h"
+#include "image_io.h"
 #include "log.h"
 #include "processing/rotation.h"
 #include "result.h"
@@ -9,34 +10,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-IOResult(ReadBmpResult, FromBmpResult);
-
-static ReadBmpResult read_bmp(char const *img_path) {
-    FILE *file = fopen(img_path, "rb");
-    if (file == NULL) {
-        return (ReadBmpResult){IO_OPEN_ERR};
-    }
-    const FromBmpResult result = from_bmp(file);
-    if (fclose(file) != 0) {
-        return (ReadBmpResult){IO_CLOSE_ERR};
-    }
-    return (ReadBmpResult){IO_OK, result};
-}
-
-IOResult(WriteBmpResult, ToBmpStatus);
-
-static WriteBmpResult write_bmp(char const *img_path, Image img) {
-    FILE *file = fopen(img_path, "wb");
-    if (file == NULL) {
-        return (WriteBmpResult){IO_OPEN_ERR};
-    }
-    const ToBmpStatus status = to_bmp(file, img);
-    if (fclose(file) != 0) {
-        return (WriteBmpResult){IO_CLOSE_ERR};
-    }
-    return (WriteBmpResult){IO_OK, status};
-}
 
 typedef enum {
     /* Program done successfully. */
@@ -53,19 +26,19 @@ typedef enum {
 
 typedef struct {
     ArgsParseResult args;
-    ReadBmpResult read_result;
-    WriteBmpResult write_result;
+    ImageOpenResult read_result;
+    ImageSaveResult write_result;
     MaybeImage rotated_img;
     Image source_img;
 } Context;
 
 #define CONTEXT_FMT                                                            \
-    "{\n  args: %d\n  read: (%d %d)\n  write: %d\n  rotated: %p\n  source: "   \
+    "{\n  args: %d\n  read: %d\n  write: %d\n  rotated: %p\n  source: "        \
     "%p\n}\n"
 
 #define CONTEXT_FMT_ARGS(context)                                              \
     (context).args.status, (context).read_result.status,                       \
-        (context).write_result._, (void *)(context).rotated_img._.pixels,      \
+        (context).write_result.status, (void *)(context).rotated_img._.pixels, \
         (void *)(context).source_img.pixels
 
 static void _exit(Context *context, int8_t code) {
@@ -134,7 +107,9 @@ int main(int argc, char const **argv) {
     _handle_cmd_args_parse_error(&context); // Possible exit point!
     DEBUGF(CONTEXT_FMT, CONTEXT_FMT_ARGS(context));
 
-    context.read_result = read_bmp(context.args._.source_image_path);
+    context.read_result = image_open(
+        context.args._.source_image_path, from_bmp
+    );
     context.source_img = context.read_result._._;
     _handle_read_bmp_error(&context); // Possible exit point!
     DEBUGF(CONTEXT_FMT, CONTEXT_FMT_ARGS(context));
@@ -145,8 +120,8 @@ int main(int argc, char const **argv) {
     _handle_rotation_error(&context);
     DEBUGF(CONTEXT_FMT, CONTEXT_FMT_ARGS(context));
 
-    context.write_result = write_bmp(
-        context.args._.output_image_path, context.rotated_img._
+    context.write_result = image_save(
+        context.args._.output_image_path, context.rotated_img._, to_bmp
     );
     _handle_write_bmp_error(&context);
     DEBUGF(CONTEXT_FMT, CONTEXT_FMT_ARGS(context));
