@@ -1,8 +1,8 @@
+#include "_cmd.h"
+#include "_messages.h"
 #include "bmp.h"
-#include "cmd.h"
 #include "io.h"
 #include "log.h"
-#include "messages.h"
 #include "processing/rotation.h"
 #include "result.h"
 
