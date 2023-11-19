@@ -39,78 +39,120 @@ static WriteBmpResult write_bmp(char const *img_path, Image img) {
     return (WriteBmpResult){IO_OK, status};
 }
 
-int main(int argc, char const **argv) {
-    LOG_LEVEL = LOG_INFO;
+typedef enum {
+    /* Program done successfully. */
+    EXIT_OK = EXIT_SUCCESS,
+    /* Error caused by wrong usage. */
+    EXIT_WRONG_USAGE,
+    /* Error during image reading. */
+    EXIT_READ,
+    /* Error during processing. */
+    EXIT_PROC,
+    /* Error during image saving. */
+    EXIT_WRITE,
+} ExitCodes;
 
-    const ArgsParseResult args = parse_cmd_args(argc, argv);
-    if (args.status == CMD_ARGS_NOT_ENOUGH) {
-        ERROR(MSG_WRONG_USAGE);
-        exit(1);
+typedef struct {
+    ArgsParseResult args;
+    ReadBmpResult read_result;
+    WriteBmpResult write_result;
+    MaybeImage rotated_img;
+    Image source_img;
+} Context;
 
-    } else if (args.status == CMD_ARGS_BAD_ANGLE) {
-        ERROR(MSG_INCORRECT_ANGLE);
-        exit(2);
+#define CONTEXT_FMT                                                            \
+    "{\n  args: %d\n  read: (%d %d)\n  write: %d\n  rotated: %p\n  source: "   \
+    "%p\n}\n"
+
+#define CONTEXT_FMT_ARGS(context)                                              \
+    (context).args.status, (context).read_result.status,                       \
+        (context).write_result._, (void *)(context).rotated_img._.pixels,      \
+        (void *)(context).source_img.pixels
+
+static void _exit(Context *context, int8_t code) {
+    DEBUG("Exit and clear resources.");
+    destroy_image(context->source_img);
+    destroy_image(context->rotated_img._);
+    exit(code);
+}
+
+static void _handle_cmd_args_parse_error(Context *context) {
+    static const char **messages[] = {
+        [CMD_ARGS_NOT_ENOUGH] = &MSG_WRONG_USAGE,
+        [CMD_ARGS_BAD_ANGLE] = &MSG_INCORRECT_ANGLE,
+    };
+    if (context->args.status != CMD_ARGS_CORRECT) {
+        ERROR(*messages[context->args.status]);
+        _exit(context, EXIT_WRONG_USAGE);
     }
+}
 
-    const ReadBmpResult read_result = read_bmp(args._.source_image_path);
-    if (read_result.status != IO_OK) {
-        ERRORF(MSG_CANNOT_READ, args._.source_image_path);
-        exit(3);
-
-    } else if (read_result._.status != FROM_BMP_OK) {
-        switch (read_result._.status) {
-        case FROM_BMP_INVALID_HEADER:
-            ERROR(MSG_BAD_HEADER);
-            break;
-        case FROM_BMP_UNSUPPORTED_FORMAT:
-            ERROR(MSG_UNSUPPORTED_FORMAT);
-            break;
-        case FROM_BMP_UNSUPPORTED_COLOR_DEPTH:
-            ERROR(MSG_UNSUPPORTED_COLOR_DEPTH);
-            break;
-        case FROM_BMP_UNSUPPORTED_COMPRESSION:
-            ERROR(MSG_UNSUPPORTED_COMPRESSION);
-            break;
-        case FROM_BMP_INVALID_PIXELS:
-            ERROR(MSG_BAD_FILE);
-            break;
-        case FROM_BMP_CANNOT_ALLOC_MEMORY:
-            ERROR(MSG_LARGE_FILE);
-            break;
-        default:
-            ERROR(MSG_BMP_PARSING_ERROR);
-            break;
-        }
-        exit(4);
+static void _handle_read_bmp_error(Context *context) {
+    static const char **messages[] = {
+        [FROM_BMP_INVALID_HEADER] = &MSG_BAD_HEADER,
+        [FROM_BMP_UNSUPPORTED_FORMAT] = &MSG_UNSUPPORTED_FORMAT,
+        [FROM_BMP_UNSUPPORTED_COLOR_DEPTH] = &MSG_UNSUPPORTED_COLOR_DEPTH,
+        [FROM_BMP_UNSUPPORTED_COMPRESSION] = &MSG_UNSUPPORTED_COMPRESSION,
+        [FROM_BMP_INVALID_PIXELS] = &MSG_BAD_FILE,
+        [FROM_BMP_CANNOT_ALLOC_MEMORY] = &MSG_LARGE_FILE,
+    };
+    if (context->read_result.status != IO_OK) {
+        ERRORF(MSG_CANNOT_READ, context->args._.source_image_path);
+        _exit(context, EXIT_READ);
+    } else if (context->read_result._.status != FROM_BMP_OK) {
+        ERROR(*messages[context->read_result._.status]);
+        _exit(context, EXIT_READ);
     }
+}
 
-    Image img = read_result._._;
-    MaybeImage rotated_img = rotate_image(img, args._.angle);
-    if (!rotated_img.status) {
+static void _handle_rotation_error(Context *context) {
+    if (!context->rotated_img.status) {
         ERROR(MSG_LARGE_FILE);
-        destroy_image(img);
-        destroy_image(rotated_img._);
-        exit(5);
+        _exit(context, EXIT_PROC);
     }
+}
 
-    const WriteBmpResult write_result = write_bmp(
-        args._.output_image_path, rotated_img._
+static void _handle_write_bmp_error(Context *context) {
+    static const char **messages[] = {
+        [TO_BMP_WRITE_FAILED] = &MSG_CANNOT_WRITE,
+        [TO_BMP_BAD_IMAGE_DATA] = &MSG_BAD_IMAGE_DATA,
+    };
+    if (context->write_result.status != IO_OK) {
+        ERRORF(MSG_CANNOT_WRITE, context->args._.output_image_path);
+        _exit(context, EXIT_WRITE);
+    } else if (context->write_result._ == TO_BMP_BAD_IMAGE_DATA) {
+        ERROR(*messages[context->write_result._]);
+        _exit(context, EXIT_WRITE);
+    }
+}
+
+int main(int argc, char const **argv) {
+    LOG_LEVEL = LOG_DEBUG;
+
+    Context context = {0};
+
+    context.args = parse_cmd_args(argc, argv);
+    _handle_cmd_args_parse_error(&context); // Possible exit point!
+    DEBUGF(CONTEXT_FMT, CONTEXT_FMT_ARGS(context));
+
+    context.read_result = read_bmp(context.args._.source_image_path);
+    context.source_img = context.read_result._._;
+    _handle_read_bmp_error(&context); // Possible exit point!
+    DEBUGF(CONTEXT_FMT, CONTEXT_FMT_ARGS(context));
+
+    context.rotated_img = rotate_image(
+        context.source_img, context.args._.angle
     );
-    if (write_result.status != IO_OK || write_result._ == TO_BMP_WRITE_FAILED) {
-        ERRORF(MSG_CANNOT_WRITE, args._.output_image_path);
-        destroy_image(img);
-        destroy_image(rotated_img._);
-        exit(6);
-    } else if (write_result._ == TO_BMP_BAD_IMAGE_DATA) {
-        ERROR(MSG_BAD_IMAGE_DATA);
-        destroy_image(img);
-        destroy_image(rotated_img._);
-        exit(6);
-    }
+    _handle_rotation_error(&context);
+    DEBUGF(CONTEXT_FMT, CONTEXT_FMT_ARGS(context));
 
-    INFOF(MSG_SUCCESS, args._.output_image_path);
+    context.write_result = write_bmp(
+        context.args._.output_image_path, context.rotated_img._
+    );
+    _handle_write_bmp_error(&context);
+    DEBUGF(CONTEXT_FMT, CONTEXT_FMT_ARGS(context));
 
-    destroy_image(img);
-    destroy_image(rotated_img._);
-    return 0;
+    INFOF(MSG_SUCCESS, context.args._.output_image_path);
+    _exit(&context, EXIT_OK);
+    return EXIT_FAILURE; // Unreachable
 }

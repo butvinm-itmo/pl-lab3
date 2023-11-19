@@ -17,7 +17,7 @@ static const char *MSG_UNSUPPORTED_COMPRESSION =
     "Sorry, we support only uncompressed images >_<";
 static const char *MSG_BAD_FILE = "Probably, your file is lost or corrupted.";
 static const char
-    *MSG_LARGE_FILE = "I not sure I can fit so large file (,,>﹏<,,)";
+    *MSG_LARGE_FILE = "I am not sure I can fit so large file (,,>﹏<,,)";
 static const char *MSG_BMP_PARSING_ERROR = "Unknown error during BMP parsing.";
 static const char
     *MSG_BAD_IMAGE_DATA = "Image data is corrupted. Probably internal error.";
