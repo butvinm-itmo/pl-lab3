@@ -8,5 +8,6 @@ PenaltyBreakAssignment: 200
 PenaltyBreakBeforeFirstCallParameter: 0
 AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
-BinPackArguments: false
+BinPackArguments: true
 BinPackParameters: false
+PenaltyReturnTypeOnItsOwnLine: 1000
