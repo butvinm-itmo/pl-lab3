@@ -1,7 +1,6 @@
 #include "_cmd.h"
 #include "_messages.h"
 #include "bmp.h"
-#include "io.h"
 #include "log.h"
 #include "processing/rotation.h"
 #include "result.h"
@@ -11,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-IO_RESULT(ReadBmpResult, FromBmpResult);
+IOResult(ReadBmpResult, FromBmpResult);
 
 static ReadBmpResult read_bmp(char const *img_path) {
     FILE *file = fopen(img_path, "rb");
@@ -25,7 +24,7 @@ static ReadBmpResult read_bmp(char const *img_path) {
     return (ReadBmpResult){IO_OK, result};
 }
 
-IO_RESULT(WriteBmpResult, ToBmpStatus);
+IOResult(WriteBmpResult, ToBmpStatus);
 
 static WriteBmpResult write_bmp(char const *img_path, Image img) {
     FILE *file = fopen(img_path, "wb");
